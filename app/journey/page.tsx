@@ -9,37 +9,41 @@ const stages = [
     id: "browser-input",
     title: "Browser Input",
     companionText: [
-      "The browser's address bar is your gateway to the web. When you enter a URL:",
-      "*Security*: Modern browsers automatically add 'https://' for encrypted connections",
-      "*Input Processing*: Special characters are percent-encoded (e.g., space becomes %20)",
-      "*HSTS*: Browsers maintain a preload list of HTTPS-only domains",
-      "*Cache Check*: Browser checks its cache for previous visits"
+      "Welcome to the Browser Journey! Let's start by understanding what happens when you type a URL:",
+      "*Address Bar Security*: The browser first checks if the site requires HTTPS. Most modern browsers enforce secure connections by default.",
+      "*URL Validation*: The browser validates the input format and checks for potentially malicious characters.",
+      "*Protocol Selection*: If no protocol is specified (http:// or https://), the browser adds one automatically.",
+      "*History & Autocomplete*: The browser checks your browsing history and bookmarks for quick suggestions.",
+      "*HSTS Check*: The browser verifies if the domain is in the HSTS preload list for enforced HTTPS.",
+      "*Initial Preparation*: The browser prepares internal data structures for the upcoming request."
     ]
   },
   {
     id: "url-parsing",
     title: "URL Parsing",
     companionText: [
-      "*Protocol* (https://): Defines how data should be transmitted",
-      "*Domain* (example.com): The website's address",
-      "*Path* (/page): Specific resource location",
-      "*Query* (?key=value): Additional parameters",
-      "*Fragment* (#section): Specific section on the page",
-      "*Punycode*: International domain names are converted to ASCII",
-      "*Normalization*: URLs are standardized (e.g., removing default ports)"
+      "Let's break down the URL structure:",
+      "*Protocol* (https://): Ensures secure encrypted communication between browser and server",
+      "*Domain*: The human-readable address that will be resolved to an IP address",
+      "*Port*: Specifies which service to connect to (default: 443 for HTTPS)",
+      "*Path*: Indicates the specific resource location on the server",
+      "*Query Parameters*: Additional data sent to the server",
+      "*Fragment*: Local reference to a specific part of the page"
     ]
   },
   {
     id: "dns-resolution",
     title: "DNS Resolution",
     companionText: [
-      "DNS resolution follows a hierarchical process:",
-      "*Browser Cache*: First checks the browser's DNS cache",
-      "*OS Cache*: Then checks the operating system's DNS cache",
-      "*Hosts File*: System checks local hosts file for static entries",
-      "*Resolver*: Local DNS resolver initiates recursive query",
-      "*Root Servers*: 13 sets of root nameservers worldwide",
-      "*Security*: DNSSEC provides cryptographic authentication"
+      "Starting DNS resolution process...",
+      "*Browser Cache Check*: First checking browser's local DNS cache for quick lookup",
+      "*OS Cache Check*: Looking in operating system's DNS cache",
+      "*Local DNS Query*: Asking your ISP's DNS resolver",
+      "*Root Server Query*: Contacting global root DNS servers",
+      "*TLD Server Query*: Getting information from .com/.org servers",
+      "*Return to TLD*: TLD server provides authoritative server info",
+      "*Return to Local DNS*: Information flows back to local resolver",
+      "*Final Response*: Browser receives the IP address"
     ]
   },
   {
@@ -143,16 +147,22 @@ export default function BrowserJourney() {
     setCurrentDialog(0);
   };
 
+  const handleStageVisualStep = (step: number) => {
+    setCurrentDialog(step);
+  };
+
   return (
     <div className="relative min-h-screen bg-background overflow-hidden">
       <StageVisualizer 
         stage={stages[currentStage].id}
         url={url}
         isSimulating={isSimulating}
+        currentDialog={currentDialog}
         stages={stages}
         onUrlChange={setUrl}
         onUrlSubmit={handleUrlSubmit}
         onStageChange={handleStageChange}
+        onVisualStepChange={handleStageVisualStep}
       />
 
       <CompanionGuide

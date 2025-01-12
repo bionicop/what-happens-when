@@ -25,19 +25,23 @@ interface StageVisualizerProps {
   url: string;
   isSimulating: boolean;
   stages: Stage[];
+  currentDialog: number; // Add this
   onUrlChange: (url: string) => void;
   onUrlSubmit: () => void;
   onStageChange: (index: number) => void;
+  onVisualStepChange: (step: number) => void;
 }
 
 export function StageVisualizer({ 
   stage, 
   url, 
-  isSimulating, 
+  isSimulating,
+  currentDialog, // Add this
   stages,
   onUrlChange, 
   onUrlSubmit,
-  onStageChange 
+  onStageChange,
+  onVisualStepChange 
 }: StageVisualizerProps) {
   const renderBrowserChrome = (content: React.ReactNode) => (
     <div className="w-full h-full max-w-6xl mx-auto">
@@ -96,13 +100,20 @@ export function StageVisualizer({
 
       case "url-parsing":
         return renderBrowserChrome(
-          <URLParser url={url} />
+          <URLParser 
+            url={url} 
+            step={currentDialog - 1} // Subtract 1 to sync with companion
+          />
         );
 
       case "dns-resolution":
         return (
           <div className="h-full">
-            <DNSVisualizer />
+            <DNSVisualizer 
+              currentStep={currentDialog}
+              onStepChange={onVisualStepChange}
+              totalSteps={7} // Match with companion text steps
+            />
           </div>
         );
 

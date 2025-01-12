@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bot, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from 'react-markdown';
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useDrag } from "react-use-gesture";
 
 interface CompanionGuideProps {
   text: string;
@@ -17,11 +18,17 @@ interface CompanionGuideProps {
 
 export function CompanionGuide({ text, onNext, onPrev, canGoNext, canGoPrev, stage }: CompanionGuideProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const guideRef = useRef<HTMLDivElement>(null);
+
+  const bind = useDrag(({ offset: [x, y] }) => {
+    setPosition({ x, y });
+  });
 
   if (!isVisible) {
     return (
       <Button
-        className="fixed bottom-8 right-8 rounded-full p-3"
+        className="fixed bottom-24 right-8 rounded-full p-3"
         onClick={() => setIsVisible(true)}
       >
         <Bot className="w-6 h-6" />
@@ -30,12 +37,17 @@ export function CompanionGuide({ text, onNext, onPrev, canGoNext, canGoPrev, sta
   }
 
   return (
-    <div className="fixed bottom-8 right-8 z-50">
+    <motion.div
+      className="fixed z-50"
+      style={{ bottom: '24px', right: '8px', transform: `translate(${position.x}px, ${position.y}px)` }}
+      {...bind()}
+    >
       <div className="flex items-end gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           className="max-w-sm"
+          ref={guideRef}
         >
           <div className="bg-white rounded-3xl p-4 shadow-lg relative">
             <button
@@ -93,6 +105,6 @@ export function CompanionGuide({ text, onNext, onPrev, canGoNext, canGoPrev, sta
           <Bot className="w-6 h-6" />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

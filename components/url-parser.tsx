@@ -1,111 +1,165 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 
-interface URLPart {
-  name: string;
-  value: string;
-  description: string;
-  color: string;
+interface URLParserProps {
+  url: string;
+  step: number;
 }
 
-export function URLParser({ url }: { url: string }) {
-  const [hoveredPart, setHoveredPart] = useState<string | null>(null);
+export function URLParser({ url, step }: URLParserProps) {
+  const [urlParts, setUrlParts] = useState<URL | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const getParts = (url: string): URLPart[] => {
-    // Add https:// if not present
-    const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+  useEffect(() => {
     try {
-      const urlObj = new URL(fullUrl);
-      return [
-        {
-          name: "Protocol",
-          value: urlObj.protocol,
-          description: "Defines how the browser should communicate with the server",
-          color: "bg-blue-100 text-blue-700 border-blue-200"
-        },
-        {
-          name: "Domain",
-          value: urlObj.hostname,
-          description: "The website's address that will be resolved via DNS",
-          color: "bg-green-100 text-green-700 border-green-200"
-        },
-        {
-          name: "Path",
-          value: urlObj.pathname || "/",
-          description: "Specific location of a resource on the server",
-          color: "bg-purple-100 text-purple-700 border-purple-200"
-        },
-        {
-          name: "Query",
-          value: urlObj.search,
-          description: "Additional parameters sent to the server",
-          color: "bg-orange-100 text-orange-700 border-orange-200"
-        },
-        {
-          name: "Fragment",
-          value: urlObj.hash,
-          description: "Points to a specific section of the webpage",
-          color: "bg-pink-100 text-pink-700 border-pink-200"
-        }
-      ].filter(part => part.value);
-    } catch {
-      return [];
+      if (url && !url.startsWith('http')) {
+        const fullUrl = `https://${url}`;
+        new URL(fullUrl);
+        setUrlParts(new URL(fullUrl));
+        setError(null);
+      } else if (url) {
+        new URL(url);
+        setUrlParts(new URL(url));
+        setError(null);
+      } else {
+        setUrlParts(null);
+        setError(null);
+      }
+    } catch (e) {
+      setUrlParts(null);
+      setError("Please enter a valid URL");
     }
-  };
+  }, [url]);
 
-  const parts = getParts(url);
+  // Auto-scroll to the active step
+  useEffect(() => {
+    if (containerRef.current && step >= 0) {
+      const activeElement = containerRef.current.children[step] as HTMLElement;
+      if (activeElement) {
+        activeElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [step]);
+
+  const elements = [
+    {
+      label: "Protocol",
+      value: urlParts?.protocol || "https://",
+      color: "bg-blue-100 border-blue-500",
+      description: "Defines how the browser should communicate (https for secure)",
+      glow: step === 0
+    },
+    {
+      label: "Domain",
+      value: urlParts?.hostname || "example.com",
+      color: "bg-green-100 border-green-500",
+      description: "The website's address that will be resolved to an IP",
+      glow: step === 1
+    },
+    {
+      label: "Port",
+      value: urlParts?.port || "443",
+      color: "bg-purple-100 border-purple-500",
+      description: "Network port for the connection (443 is default for HTTPS)",
+      glow: step === 2
+    },
+    {
+      label: "Path",
+      value: urlParts?.pathname || "/",
+      color: "bg-orange-100 border-orange-500",
+      description: "Location of the specific resource on the server",
+      glow: step === 3
+    },
+    {
+      label: "Query",
+      value: urlParts?.search || "",
+      color: "bg-red-100 border-red-500",
+      description: "Additional parameters sent to the server",
+      glow: step === 4
+    },
+    {
+      label: "Fragment",
+      value: urlParts?.hash || "",
+      color: "bg-yellow-100 border-yellow-500",
+      description: "Points to a specific section on the page",
+      glow: step === 5
+    }
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <h2 className="text-2xl font-semibold mb-6">URL Structure Analysis</h2>
-      
-      <div className="space-y-8">
-        <div className="flex flex-wrap gap-1 text-lg font-mono">
-          {parts.map((part, index) => (
+    <div className="h-full flex flex-col">
+      <div className="flex-none p-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">URL Structure Analysis</h2>
+          {error ? (
+            <p className="text-red-500">{error}</p>
+          ) : (
+            <p className="text-gray-600">
+              {url ? `Analyzing the components of: ${urlParts?.href || url}` : 'Enter a URL to analyze'}
+            </p>
+          )}
+          <p className="text-sm text-gray-500 mt-2">Use the companion guide to learn more about each component.</p>
+        </div>
+      </div>
+
+      <div 
+        ref={containerRef}
+        className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar"
+      >
+        <div className="grid gap-6">
+          {elements.map((element, index) => (
             <motion.div
-              key={part.name}
-              className={`relative cursor-help px-3 py-1.5 rounded-md border ${part.color}`}
-              onHoverStart={() => setHoveredPart(part.name)}
-              onHoverEnd={() => setHoveredPart(null)}
-              whileHover={{ scale: 1.05 }}
+              key={element.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ 
+                opacity: index <= step ? 1 : 0.5,
+                y: 0 
+              }}
+              className={`p-4 rounded-lg border-2 ${element.color} ${
+                element.glow ? "ring-4 ring-opacity-50 ring-blue-500" : ""
+              } transition-all duration-300`}
             >
-              {part.value}
-              {hoveredPart === part.name && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute left-0 top-full mt-2 w-64 p-3 bg-white rounded-lg shadow-lg z-10"
-                >
-                  <div className="font-sans">
-                    <div className="font-medium mb-1">{part.name}</div>
-                    <div className="text-sm text-gray-600">{part.description}</div>
-                  </div>
-                </motion.div>
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold">{element.label}</h3>
+                <code className="bg-white px-2 py-1 rounded">
+                  {element.value || "<none>"}
+                </code>
+              </div>
+              <p className="text-sm text-gray-600">{element.description}</p>
+              
+              {/* Show real example for google.com */}
+              {url.includes('google.com') && (
+                <div className="mt-2 text-sm bg-gray-50 p-2 rounded">
+                  <span className="font-medium">Google Example: </span>
+                  {getGoogleExample(element.label)}
+                </div>
               )}
             </motion.div>
           ))}
         </div>
-
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-medium mb-4">Quick Facts</h3>
-          <ul className="space-y-2">
-            <li className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500" />
-              <span>Protocols (like https://) ensure secure communication</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500" />
-              <span>Domains are human-readable addresses for IP locations</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-purple-500" />
-              <span>Paths help organize content on web servers</span>
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
   );
+}
+
+function getGoogleExample(part: string): string {
+  switch(part) {
+    case "Protocol":
+      return "Google enforces HTTPS for security";
+    case "Domain":
+      return "www.google.com uses global DNS load balancing";
+    case "Port":
+      return "443 for secure HTTPS traffic";
+    case "Path":
+      return "/search is Google's main search endpoint";
+    case "Query":
+      return "?q=search+term defines the search parameters";
+    case "Fragment":
+      return "#results jumps to search results section";
+    default:
+      return "";
+  }
 }

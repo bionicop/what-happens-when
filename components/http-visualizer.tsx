@@ -27,7 +27,14 @@ const commonHeaders = {
   "Cache-Control": ["no-cache", "max-age=3600"]
 };
 
-const methodInfo = {
+const methodInfo: {
+  [key: string]: {
+    description: string;
+    usage: string;
+    example: string;
+    hasBody: boolean;
+  };
+} = {
   GET: {
     description: "Retrieve data from the server",
     usage: "Used when you want to read or fetch data",
